@@ -1,0 +1,128 @@
+"""Admin baseline checker for a Linux server snapshot.
+
+Dependency-free. It reads a snapshot JSON (an evidence bundle captured
+from a server, see capture_snapshot.sh) and checks the baseline that
+Level 1 teaches: key-only SSH, a static address, a LAN-only firewall,
+a named storage pool, the Cockpit dashboard, an isolated lab network,
+running services with logs, automatic security updates, and a verified
+config backup. Every check returns a name, a pass flag, and the value
+it actually saw, so a reader can audit the result without trusting a
+summary line.
+"""
+import json
+
+
+def _get(data, *keys, default=None):
+    cur = data
+    for key in keys:
+        if not isinstance(cur, dict) or key not in cur:
+            return default
+        cur = cur[key]
+    return cur
+
+
+def check_os(snap):
+    os_id = str(_get(snap, "os", "id", default="")).lower()
+    version = str(_get(snap, "os", "version_id", default=""))
+    ok = os_id == "ubuntu" and version.startswith("24.04")
+    return ok, "os.id=%s version_id=%s" % (os_id, version)
+
+
+def check_ssh_key_only(snap):
+    password_auth = str(_get(snap, "ssh", "password_authentication", default="")).lower()
+    root_locked = _get(snap, "ssh", "root_password_locked", default=False)
+    ok = password_auth == "no" and root_locked is True
+    return ok, "password_authentication=%s root_password_locked=%s" % (password_auth, root_locked)
+
+
+def check_static_ip(snap):
+    iface = _get(snap, "network", "primary_interface", default={}) or {}
+    ok = iface.get("name") == "eno1" and iface.get("address") == "192.168.1.50/24" and iface.get("mode") == "static"
+    return ok, "interface=%s address=%s mode=%s" % (iface.get("name"), iface.get("address"), iface.get("mode"))
+
+
+def check_firewall(snap):
+    fw = _get(snap, "firewall", default={}) or {}
+    rules = fw.get("allowed_from_lan", []) or []
+    ports = sorted(r.get("port") for r in rules if isinstance(r, dict))
+    sources = sorted(set(r.get("source") for r in rules if isinstance(r, dict)))
+    ok = (fw.get("active") is True and fw.get("default_incoming") == "deny"
+          and ports == [22, 9090] and sources == ["192.168.1.0/24"])
+    return ok, "active=%s default_incoming=%s ports=%s sources=%s" % (
+        fw.get("active"), fw.get("default_incoming"), ports, sources)
+
+
+def check_storage_pool(snap):
+    pool = _get(snap, "storage", "pool", default={}) or {}
+    pvs = pool.get("physical_volumes", []) or []
+    total = round(sum(float(pv.get("size_gb", 0)) for pv in pvs), 2)
+    ok = pool.get("name") == "labvg" and len(pvs) == 3 and total >= 1500.0
+    return ok, "pool=%s pvs=%d total_gb=%.2f" % (pool.get("name"), len(pvs), total)
+
+
+def check_cockpit(snap):
+    cp = _get(snap, "cockpit", default={}) or {}
+    ok = (cp.get("port") == 9090 and cp.get("socket_activated") is True
+          and cp.get("machines_plugin") is True and int(cp.get("version", 0)) >= 300)
+    return ok, "version=%s port=%s socket_activated=%s machines_plugin=%s" % (
+        cp.get("version"), cp.get("port"), cp.get("socket_activated"), cp.get("machines_plugin"))
+
+
+def check_labnet_isolated(snap):
+    net = _get(snap, "network", "labnet", default={}) or {}
+    ok = (net.get("name") == "labnet" and net.get("subnet") == "10.99.0.0/24"
+          and net.get("forward") in ("none", None) and net.get("autostart") is True)
+    return ok, "name=%s subnet=%s forward=%s autostart=%s" % (
+        net.get("name"), net.get("subnet"), net.get("forward"), net.get("autostart"))
+
+
+def check_services_and_logs(snap):
+    services = _get(snap, "services", default=[]) or []
+    by_name = {s.get("name"): s for s in services if isinstance(s, dict)}
+    needed = ["ssh", "cockpit.socket", "libvirtd"]
+    missing = [n for n in needed if by_name.get(n, {}).get("state") != "active"]
+    logs = _get(snap, "logs", "journal_check", default="")
+    ok = not missing and logs == "checked"
+    return ok, "services_active=%s journal_check=%s" % (
+        [n for n in needed if n not in missing], logs)
+
+
+def check_auto_updates(snap):
+    enabled = _get(snap, "updates", "automatic_security_updates", default=False)
+    return enabled is True, "automatic_security_updates=%s" % (enabled,)
+
+
+def check_backup(snap):
+    backup = _get(snap, "backup", default={}) or {}
+    sha = str(backup.get("sha256", ""))
+    ok = backup.get("present") is True and len(sha) == 64 and all(c in "0123456789abcdef" for c in sha)
+    return ok, "present=%s sha256_len=%d" % (backup.get("present"), len(sha))
+
+
+CHECKS = [
+    ("os_ubuntu_24_04", check_os),
+    ("ssh_key_only", check_ssh_key_only),
+    ("static_ip_plan", check_static_ip),
+    ("firewall_lan_only", check_firewall),
+    ("storage_pool_labvg", check_storage_pool),
+    ("cockpit_dashboard", check_cockpit),
+    ("labnet_isolated", check_labnet_isolated),
+    ("services_and_logs", check_services_and_logs),
+    ("automatic_security_updates", check_auto_updates),
+    ("verified_config_backup", check_backup),
+]
+
+
+def run_checks(snapshot):
+    results = []
+    for name, fn in CHECKS:
+        passed, detail = fn(snapshot)
+        results.append({"check": name, "pass": bool(passed), "detail": detail})
+    passed_count = sum(1 for r in results if r["pass"])
+    return {"total": len(results), "passed": passed_count,
+            "failed": len(results) - passed_count, "results": results}
+
+
+def load_snapshot(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
