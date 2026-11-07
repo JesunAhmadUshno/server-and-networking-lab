@@ -8,3 +8,6 @@ models/
 .env
 *.key
 secrets/
+site/.rubric/
+site/node_modules/
+site/dist/
