@@ -63,8 +63,17 @@ itself by capture_snapshot.sh at 2026-11-07 22:53 UTC. Checker result:
 firewall still denies incoming by default and still limits every rule
 to 192.168.1.0/24, but it now also allows ports 3389 (RDP) and 9001,
 which the 2026-10-26 baseline did not. The baseline is not edited to
-make the check pass. Either the two rules are removed, or the Owner
-approves them and the baseline is changed in a recorded commit.
+make the check pass.
+
+Follow-up the same evening: before any rule was removed, a guard step
+checked what listens on the two ports. 3389 is xrdp (remote desktop)
+and 9001 is a Penpot design server in Docker, both in active use, so
+no rule was deleted and the decision went back to the Owner. The
+check also showed a fifth rule, 9001 allowed on the tailscale0
+interface from any source, which this snapshot does not contain: the
+first version of capture_snapshot.sh skipped interface-scoped ufw
+rules. The script now records them (with an "interface" field), and
+the snapshot file is kept as captured, incomplete on that one rule.
 
 Also from the live capture: the backup file's SHA-256 equals the hash
 recorded on 2026-10-26 (the backup is unchanged), and the journal

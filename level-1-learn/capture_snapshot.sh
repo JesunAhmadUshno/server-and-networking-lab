@@ -80,9 +80,13 @@ def firewall():
         return None
     rules = []
     for line in t.splitlines():
-        m = re.match(r"^(\d+)(?:/tcp)?\s+ALLOW IN\s+(\S+)", line.strip())
+        # "22/tcp ALLOW IN 192.168.1.0/24" or "9001/tcp on tailscale0 ALLOW IN Anywhere"; (v6) twins are skipped.
+        m = re.match(r"^(\d+)(?:/\w+)?(?: on (\S+))?\s+ALLOW IN\s+(\S+)", line.strip())
         if m:
-            rules.append({"port": int(m.group(1)), "source": m.group(2)})
+            rule = {"port": int(m.group(1)), "source": m.group(3)}
+            if m.group(2):
+                rule["interface"] = m.group(2)
+            rules.append(rule)
     d = re.search(r"Default:\s*(\w+) \(incoming\)", t)
     return {"active": "Status: active" in t, "default_incoming": d.group(1) if d else None, "allowed_from_lan": rules}
 
