@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useId } from 'react';
 import snapshot from '../../level-1-learn/evidence/r610-snapshot-2026-10-26.json';
+import live from '../../level-1-learn/evidence/r610-snapshot-2026-11-07-live.json';
 import pySrc from '../../level-1-learn/baseline_check.py?raw';
 import testSrc from '../../tests/test_learn_baseline.py?raw';
 import readme from '../../README.md?raw';
@@ -16,6 +17,8 @@ const SNAP_PATH = 'level-1-learn/evidence/r610-snapshot-2026-10-26.json';
 // ---- everything below is derived from repo files at build time ----
 const policy = parsePolicy(pySrc);
 const base = runChecks(snapshot, policy);
+const liveRun = runChecks(live, policy);
+const LIVE_PATH = 'level-1-learn/evidence/r610-snapshot-2026-11-07-live.json';
 const meta = snapshot.snapshot_meta;
 const machineName = meta.machine.split(',')[0].trim();
 const machineShort = machineName.split(' ').pop();
@@ -119,6 +122,11 @@ function Hero() {
         The admin baseline for a {machineName} becomes ten named checks: who can log in and how, which services run, how storage is pooled, which network the machine sits on and what the firewall lets in.
         Each check prints the value it actually saw, so you can audit the verdict instead of trusting it. Below, the same checker runs in your browser, and you can break the snapshot to watch exactly one check fail.
       </p>
+      <div className="recorded" role="note">
+        <b>Live capture {live.snapshot_meta.evidence_date}: {liveRun.passed} of {liveRun.total} pass on the running {live.snapshot_meta.hostname}.</b>
+        <span>Captured on the server by capture_snapshot.sh. {liveRun.failed ? 'Drift found since the recorded baseline:' : 'No drift from the recorded baseline.'}</span>
+        <Terminal summary={{ ...liveRun, results: liveRun.results.filter((r) => !r.pass) }} label="Failing checks on the live capture" path={LIVE_PATH} />
+      </div>
       <div className="actions">
         <a className="btn primary" href="#checker">Run the checker</a>
         <a className="btn ghost" href="#mutations">Break the snapshot</a>
@@ -136,11 +144,11 @@ function Hero() {
   );
 }
 
-function Terminal({ summary, label }) {
+function Terminal({ summary, label, path = SNAP_PATH }) {
   return (
     <pre className="term" aria-label={label} tabIndex={0}>
       <span className="dim">$ python3 level-1-learn/run_check.py</span>{'\n'}
-      Snapshot: {SNAP_PATH}{'\n'}
+      Snapshot: {path}{'\n'}
       {summary.results.map((r) => <span key={r.check} className={r.pass ? 'p' : 'f'}>{formatRow(r)}{'\n'}</span>)}
       <b>Result: {summary.passed} of {summary.total} checks passed</b>
     </pre>

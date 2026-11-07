@@ -18,7 +18,7 @@ Level 1 is a small, honest, well-tested artifact: a dependency-free checker of 1
 | Baselines / related work | C (was D) | Fixed today: DOSSIER.md Past now names CIS Benchmarks, OpenSCAP/SCAP, Lynis, Chef InSpec, Goss and Testinfra, and says this checker is narrower. Still open: no mapping of checks to CIS control IDs. NOVELTY.md is a draft with no measured difference. |
 | Statistics / uncertainty | n/a | The checks are boolean and deterministic on a fixed snapshot; there is no sampling, so no confidence interval applies. The relevant uncertainty is evidence age and transcription error, covered under threats. |
 | Reproducibility | A | `python3 level-1-learn/run_check.py` and the unit tests need only Python 3 and run in under a second. CI runs both. The site build reruns the Python checker and asserts the JS port agrees on 16 snapshots. |
-| Validity of the evidence | C | The only snapshot is transcribed from a build record dated 2026-10-26, not captured from the machine. capture_snapshot.sh emits only the os and ssh fields, so capture-to-check has never run end to end. |
+| Validity of the evidence | A (was C) | Update 2026-11-07: capture_snapshot.sh now emits every field and ran on the R610; the live snapshot (evidence/r610-snapshot-2026-11-07-live.json) scores 9 of 10, and the miss is real firewall drift (ports 3389 and 9001 added). Capture-to-check has run end to end. |
 | Test strength | A (was B) | Mutation coverage was 6 of 10 checks at the 2026-11-04 run; it is now 10 of 10 (tests/test_learn_baseline.py, 13 tests). Each mutation asserts exactly one failing check. The site build adds a JS/Python parity check with threshold edge cases. |
 | Threats to validity | B | Stated plainly in the Learn README and on the dashboard: evidence age, transcription, checker run off the server, Cockpit taught from the record. Added on the dashboard: the two weak checks and the unexplained Cockpit version floor. |
 | Limitations | B | Present and honest. The checker is host-specific: interface, address, ports and subnet are fixed in code, so policy and mechanism are not separated. |
@@ -37,8 +37,8 @@ Level 1 is a small, honest, well-tested artifact: a dependency-free checker of 1
 
 | Gap | What closes it | Needs |
 | --- | --- | --- |
-| Evidence is transcribed, not captured | A fresh snapshot captured on the R610 and committed as a new dated file, then checked | One planned power-on window on the R610 with SSH access (host-key verification fixed, not bypassed); about 15 minutes of operator time. No paid compute. |
-| capture_snapshot.sh is partial | Extend it to emit every field the checker reads (network, firewall, storage, cockpit, services, logs, updates, backup) | Script work is cheap, but it can only be validated on the R610 itself (Ubuntu 24.04 with ufw, LVM, libvirt and Cockpit installed); same power-on window as above. Not done here because it could not be run. |
+| ~~Evidence is transcribed, not captured~~ | CLOSED 2026-11-07: live snapshot captured on the R610 and checked (9 of 10, firewall drift) | Done |
+| ~~capture_snapshot.sh is partial~~ | CLOSED 2026-11-07: emits every field, validated on the R610 | Done |
 | Backup check is format-only | Store the backup's size and compare `sha256sum` of the file with the recorded hash during capture | Read access to /srv/backup on the R610 during capture. |
 | Journal check is self-reported | Replace `journal_check == "checked"` with captured evidence (for example, the last boot's journal entry count and timestamp) | Capture on the R610. |
 | Host-specific policy | Move expected values to a policy JSON; keep the checker generic | Code change only (a few hours); deferred to Level 2 so the Level 1 tests stay a fixed record. |

@@ -50,20 +50,30 @@ baseline_check.py, and each check prints the value it actually saw.
 ## Evidence capture (how a fresh snapshot is taken)
 
 capture_snapshot.sh is the read-only capture script. Run it on the
-server in a planned power-on window; it changes nothing and prints
-the snapshot fields the checker needs, with the exact commands for
-the remaining fields in its output note. Save the result as a new
-dated file under evidence/, never over an older snapshot, then run
-the checker on it.
+server; it changes nothing and prints every field the checker reads
+(unreadable fields come out as null, so the checker fails them instead
+of guessing). Save the result as a new dated file under evidence/,
+never over an older snapshot, then run the checker on it.
 
-The snapshot in evidence/ today is the 2026-10-26 snapshot. It was
-transcribed from the verified build record (TECHNICAL-DOCUMENTATION.md
-of the R610 Ubuntu install goal, live-verified on 2026-10-26). It is
-not a live capture taken on 2026-11-04: a live re-capture attempt in
-this cycle could not reach the server (the fleet SSH route failed
-host-key verification, which was not bypassed, and direct network
-probes are blocked from the Muse VM). The next power-on window
-closes that gap with capture_snapshot.sh.
+### First live capture, 2026-11-07: 9 of 10, firewall drift found
+
+evidence/r610-snapshot-2026-11-07-live.json was captured on the R610
+itself by capture_snapshot.sh at 2026-11-07 22:53 UTC. Checker result:
+9 of 10. The one failure is real drift, not a capture error: the
+firewall still denies incoming by default and still limits every rule
+to 192.168.1.0/24, but it now also allows ports 3389 (RDP) and 9001,
+which the 2026-10-26 baseline did not. The baseline is not edited to
+make the check pass. Either the two rules are removed, or the Owner
+approves them and the baseline is changed in a recorded commit.
+
+Also from the live capture: the backup file's SHA-256 equals the hash
+recorded on 2026-10-26 (the backup is unchanged), and the journal
+showed 923 error-priority lines in the current boot (12 days of
+uptime), now recorded in the snapshot rather than self-reported.
+
+The 2026-10-26 snapshot stays in evidence/ as the transcribed record
+it always was (from TECHNICAL-DOCUMENTATION.md of the R610 Ubuntu
+install goal).
 
 ## Run it
 
