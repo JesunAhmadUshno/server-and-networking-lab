@@ -99,6 +99,14 @@ tests pass, including six mutation tests: each broken snapshot
 port, bad backup hash, wrong static address) fails exactly the one
 check it breaks.
 
+Update after the 2026-11-04 run: four more mutation tests (older
+Ubuntu release, Cockpit without the machines plugin, libvirtd
+stopped, automatic updates off) bring the suite to 13 tests, with a
+failing case for all 10 checks. The site/ dashboard's build also
+runs a parity check: a JavaScript port of the checker must match
+this Python checker, flag for flag and detail for detail, on the
+recorded snapshot, all 10 mutations and threshold edge cases.
+
 ## Limits, stated plainly
 
 - The evidence is dated 2026-10-26, not today. Server state can

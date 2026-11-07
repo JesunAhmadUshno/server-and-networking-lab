@@ -2,6 +2,8 @@
 
 Linux systems administration and networking proven on a real enterprise server: the Dell R610 base, its network plan, NAS and storage, backup and restore drills, and the rack build documented as a chapter.
 
+Live dashboard: https://jesunahmadushno.github.io/server-and-networking-lab/ (the checker, its mutation tests, the storage pool and a model of the firewall rules, running in the browser on the recorded 2026-10-26 snapshot; every number is read from this repo at build time).
+
 Status: Level 1, Learn DONE 2026-11-04 (ROADMAP-V3-BATCH loop cycle). Levels 2 and 3 are scaffold only. Project: P23. Fleet node: Dell R610. Wave: Waves 1 to 2.
 
 ## Start here
@@ -24,7 +26,7 @@ Level 1, Learn result (checker run 2026-11-04 on the Muse VM against the recorde
 | Test | Result |
 | --- | --- |
 | Admin baseline checker, 10 checks on the recorded snapshot | 10 of 10 passed: Ubuntu 24.04.5, key-only SSH, static 192.168.1.50/24, LAN-only firewall (22, 9090), labvg pool 1531.87 GB from 3 PVs, Cockpit 314 on 9090, isolated labnet 10.99.0.0/24, services and logs, automatic security updates, verified config backup |
-| Unit tests | 9 tests pass, including 6 mutation tests where a broken snapshot fails exactly the check it breaks |
+| Unit tests | 13 tests pass, including 10 mutation tests (one per check) where a broken snapshot fails exactly the check it breaks. The 2026-11-04 run had 9 tests and 6 mutation tests; the other 4 were added afterwards. |
 
 Evidence honesty: the snapshot is the verified 2026-10-26 build record, not a live 2026-11-04 capture. A live re-capture is the named open item for the next P23 cycle; see the Learn README limits.
 
