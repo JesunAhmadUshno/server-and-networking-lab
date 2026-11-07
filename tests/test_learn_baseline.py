@@ -68,6 +68,28 @@ class BaselineTests(unittest.TestCase):
         snap["network"]["primary_interface"]["address"] = "192.168.1.99/24"
         self.assertEqual(failed_names(run_checks(snap)), ["static_ip_plan"])
 
+    def test_old_ubuntu_release_fails_os_check_only(self):
+        snap = copy.deepcopy(load())
+        snap["os"]["version_id"] = "22.04.4"
+        self.assertEqual(failed_names(run_checks(snap)), ["os_ubuntu_24_04"])
+
+    def test_missing_machines_plugin_fails_cockpit_only(self):
+        snap = copy.deepcopy(load())
+        snap["cockpit"]["machines_plugin"] = False
+        self.assertEqual(failed_names(run_checks(snap)), ["cockpit_dashboard"])
+
+    def test_inactive_libvirtd_fails_services_only(self):
+        snap = copy.deepcopy(load())
+        for service in snap["services"]:
+            if service["name"] == "libvirtd":
+                service["state"] = "inactive"
+        self.assertEqual(failed_names(run_checks(snap)), ["services_and_logs"])
+
+    def test_updates_off_fails_auto_updates_only(self):
+        snap = copy.deepcopy(load())
+        snap["updates"]["automatic_security_updates"] = False
+        self.assertEqual(failed_names(run_checks(snap)), ["automatic_security_updates"])
+
     def test_snapshot_meta_names_its_source_and_date(self):
         meta = load()["snapshot_meta"]
         self.assertEqual(meta["evidence_date"], "2026-10-26")
