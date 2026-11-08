@@ -6,7 +6,7 @@ Versions follow Semantic Versioning; no release is tagged yet.
 ## [Unreleased]
 
 ### Added
-- 2026-11-08: Recovery harness. src/nightly_backup.sh (H1: hashed
+- 2026-11-08: Recovery harness. src/nightly_backup.sh (H1: hashed, root-only (umask 077)
   backup, off-server copy, far-side hash check, every night logged,
   failures included) and src/drill.sh (H2, H3: timed trial, restore
   verified with tar --compare, records never overwritten). The results

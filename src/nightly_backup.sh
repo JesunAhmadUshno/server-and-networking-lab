@@ -12,8 +12,12 @@
 # (hashes and sizes only, never the archive) is the evidence that is
 # copied into experiments/backups/. The archive holds /etc secrets: the
 # off-server host must be one you trust as much as the server itself.
+# umask 077: the archive and log are readable by root only, here and,
+# through scp -p, on the far side.
 # ponytail: no retention; 7 nights of /etc is tiny. Prune once pool data is large.
+# ponytail: not encrypted; the far side is trusted. Add age/gpg before using an untrusted host.
 set -u
+umask 077
 : "${BACKUP_REMOTE:?set BACKUP_REMOTE}"
 DIR=${BACKUP_DIR:-/srv/backup}
 START=$(date -u +%s)

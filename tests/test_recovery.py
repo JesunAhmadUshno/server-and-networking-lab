@@ -114,6 +114,9 @@ class Scripts(unittest.TestCase):
         line = json.loads(open(os.path.join(bdir, "h1-log.jsonl")).read().splitlines()[-1])
         self.assertTrue(line["verified"])
         self.assertEqual(line["sha256"], line["offsite_sha256"])
+        for f in (os.path.join(bdir, line["archive"]), os.path.join(remote, line["archive"]),
+                  os.path.join(bdir, "h1-log.jsonl")):
+            self.assertEqual(os.stat(f).st_mode & 0o077, 0, f + " must be readable by its owner only")
 
     def test_nightly_backup_logs_a_failed_copy_as_unverified(self):
         bdir = os.path.join(self.d, "backup")
