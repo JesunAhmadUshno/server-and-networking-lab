@@ -1,10 +1,10 @@
 name: Pages
 
-# Builds the live dashboard in site/ from level-1-learn/, tests/ and the READMEs and publishes it to GitHub Pages.
+# Builds the live dashboard in site/ from src/, experiments/, results/, tests/ and the docs and publishes it to GitHub Pages.
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'level-1-learn/**', 'level-2-build/README.md', 'level-3-deep/README.md', 'tests/**', 'README.md', 'SPEC.md', '.github/workflows/pages.yml']
+    paths: ['site/**', 'src/**', 'experiments/**', 'results/**', 'tests/**', 'README.md', 'PROPOSAL.md', 'REPORT.md', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:

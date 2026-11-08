@@ -2,8 +2,8 @@
 # capture_snapshot.sh: read-only evidence capture for the P23 baseline.
 # Run this ON the server. It changes nothing: every command below only
 # reads state. It prints one JSON snapshot with every field
-# baseline_check.py reads. Save it as a dated file under evidence/, then
-# run: python3 level-1-learn/run_check.py <that file>
+# baseline_check.py reads. Save it as a dated file under
+# experiments/snapshots/, then run: python3 src/run_check.py <that file>
 #
 #   sh capture_snapshot.sh [backup-path] > r610-snapshot-$(date +%F)-live.json
 #
@@ -140,7 +140,7 @@ snap = {
     "logs": {"journal_check": "checked" if errs is not None else None,
              "errors_this_boot": len(errs.splitlines()) if errs is not None else None},
     "updates": updates(), "backup": backup(os.environ["BACKUP"]),
-    "snapshot_meta": {"source": "live capture by level-1-learn/capture_snapshot.sh on the server",
+    "snapshot_meta": {"source": "live capture by src/capture_snapshot.sh on the server",
                       "machine": "hostname " + socket.gethostname(),
                       "hostname": socket.gethostname(), "evidence_date": time.strftime("%Y-%m-%d"),
                       "captured_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")},

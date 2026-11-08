@@ -1,24 +1,21 @@
 import { useMemo, useState, useEffect, useId } from 'react';
-import snapshot from '../../level-1-learn/evidence/r610-snapshot-2026-10-26.json';
-import live from '../../level-1-learn/evidence/r610-snapshot-2026-11-08-live.json';
-import pySrc from '../../level-1-learn/baseline_check.py?raw';
-import testSrc from '../../tests/test_learn_baseline.py?raw';
+import snapshot from '../../experiments/snapshots/r610-snapshot-2026-10-26.json';
+import live from '../../experiments/snapshots/r610-snapshot-2026-11-08-live.json';
+import pySrc from '../../src/baseline_check.py?raw';
+import testSrc from '../../tests/test_baseline.py?raw';
 import readme from '../../README.md?raw';
-import learnReadme from '../../level-1-learn/README.md?raw';
-import buildReadme from '../../level-2-build/README.md?raw';
-import deepReadme from '../../level-3-deep/README.md?raw';
-import spec from '../../SPEC.md?raw';
+import report from '../../REPORT.md?raw';
 import { parsePolicy, runChecks, formatRow, MUTATIONS, mutate, pythonExpectations, countTests, poolTotal, evaluateFirewall, networkOf } from './checker.js';
 
 const REPO = 'https://github.com/JesunAhmadUshno/server-and-networking-lab';
 const blob = (p) => `${REPO}/blob/main/${p}`;
-const SNAP_PATH = 'level-1-learn/evidence/r610-snapshot-2026-10-26.json';
+const SNAP_PATH = 'experiments/snapshots/r610-snapshot-2026-10-26.json';
 
 // ---- everything below is derived from repo files at build time ----
 const policy = parsePolicy(pySrc);
 const base = runChecks(snapshot, policy);
 const liveRun = runChecks(live, policy);
-const LIVE_PATH = 'level-1-learn/evidence/r610-snapshot-2026-11-08-live.json';
+const LIVE_PATH = 'experiments/snapshots/r610-snapshot-2026-11-08-live.json';
 const meta = snapshot.snapshot_meta;
 const machineName = meta.machine.split(',')[0].trim();
 const machineShort = machineName.split(' ').pop();
@@ -29,9 +26,9 @@ const testCount = countTests(testSrc);
 const expectations = pythonExpectations(testSrc);
 const mutationTests = Object.values(expectations).filter((t) => t.expected?.length).length;
 const honesty = (readme.match(/^Evidence honesty:.*$/m) || [''])[0];
-const statusOf = (md) => (md.match(/^Status: ([A-Z]+)(?: (\d{4}-\d{2}-\d{2}))?/m) || []).slice(1);
-const scopeOf = (word) => (spec.match(new RegExp(`^- ${word}: (.*)$`, 'm')) || [])[1];
-const stepTitles = [...learnReadme.matchAll(/^(\d)\. ([^.]+)\./gm)].map((m) => m[2]);
+const stages = [...readme.matchAll(/^- (\w+): ([A-Z]+)(?: (\d{4}-\d{2}-\d{2}))?$/gm)].map((m) => m.slice(1));
+const verdict = (readme.match(/^\*\*Verdict\.\*\* ([^.]+)/m) || [])[1];
+const stepTitles = [...report.matchAll(/^(\d)\. ([^.]+)\./gm)].map((m) => m[2]);
 const daysOld = Math.floor((Date.now() - Date.parse(`${meta.evidence_date}T00:00:00Z`)) / 86400000);
 const byName = Object.fromEntries(base.results.map((r) => [r.check, r]));
 const preset = (test) => MUTATIONS.find((m) => m.test.startsWith(test));
@@ -55,11 +52,11 @@ function MenuBar() {
     <div className="menubar" role="banner">
       <span className="apple" aria-hidden="true">◆</span>
       <a className="app" href="#top">Server &amp; Networking Lab</a>
-      <a className="m" href={blob('SPEC.md')}>Spec</a>
-      <a className="m" href={blob('level-1-learn/README.md')}>Learn</a>
-      <a className="m" href={blob('docs/research-review.md')}>Review</a>
+      <a className="m" href={blob('PROPOSAL.md')}>Proposal</a>
+      <a className="m" href={blob('REPORT.md')}>Report</a>
+      <a className="m" href={blob('CHANGELOG.md')}>Changelog</a>
       <span className="spacer" />
-      <span className="status"><i /> Level 1 {statusOf(learnReadme)[0]?.toLowerCase()}</span>
+      <span className="status"><i /> {verdict}</span>
       <a href={REPO}>GitHub ↗</a>
       <span className="clock">{now.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
     </div>
@@ -100,7 +97,7 @@ export default function App() {
       <Limits />
       <Dock />
       <footer>
-        Code: Apache-2.0. Every number on this page is read from <code>level-1-learn/</code>, <code>tests/</code> and the READMEs at build time; the checker, the mutation lab, the storage calculator and the firewall model run in your browser.
+        Code: Apache-2.0. Every number on this page is read from <code>src/</code>, <code>experiments/</code>, <code>tests/</code> and the docs at build time; the checker, the mutation lab, the storage calculator and the firewall model run in your browser.
       </footer>
     </div>
   );
@@ -110,7 +107,7 @@ function Hero() {
   return (
     <header className="card hero window" id="top" data-title={`${hostname} - baseline.report`}>
       <div className="head">
-        <p className="eyebrow">Level 1, Learn · recorded snapshot</p>
+        <p className="eyebrow">Baseline · recorded and live snapshots</p>
         <span className={`pill ${base.failed ? 'bad' : 'good'}`}>● {base.passed} of {base.total} pass</span>
       </div>
       <h1>A server you can trust is a short list of <em>checkable</em> facts: {base.passed} of {base.total} baseline checks pass on the recorded {machineShort} snapshot.</h1>
@@ -130,7 +127,7 @@ function Hero() {
       <div className="actions">
         <a className="btn primary" href="#checker">Run the checker</a>
         <a className="btn ghost" href="#mutations">Break the snapshot</a>
-        <span className="hint">Or locally: <code>python3 level-1-learn/run_check.py</code></span>
+        <span className="hint">Or locally: <code>python3 src/run_check.py</code></span>
       </div>
       <div className="tiles three">
         <div className="tile"><div className="num">{base.passed}/{base.total}</div><div className="cap">Baseline checks passed on the recorded snapshot</div></div>
@@ -147,7 +144,7 @@ function Hero() {
 function Terminal({ summary, label, path = SNAP_PATH }) {
   return (
     <pre className="term" aria-label={label} tabIndex={0}>
-      <span className="dim">$ python3 level-1-learn/run_check.py</span>{'\n'}
+      <span className="dim">$ python3 src/run_check.py</span>{'\n'}
       Snapshot: {path}{'\n'}
       {summary.results.map((r) => <span key={r.check} className={r.pass ? 'p' : 'f'}>{formatRow(r)}{'\n'}</span>)}
       <b>Result: {summary.passed} of {summary.total} checks passed</b>
@@ -167,7 +164,7 @@ function Checker() {
           <p className="eyebrow">Runs in your browser</p>
           <h2>The checker, ported line for line, runs <em>live</em> on the snapshot.</h2>
           <p className="sub">
-            This is a JavaScript port of <a href={blob('level-1-learn/baseline_check.py')}>baseline_check.py</a>. It reads its expected values (interface, address, ports, thresholds) out of the Python source,
+            This is a JavaScript port of <a href={blob('src/baseline_check.py')}>baseline_check.py</a>. It reads its expected values (interface, address, ports, thresholds) out of the Python source,
             and the build fails unless it gives the same pass flag and the same detail string as the Python checker on {MUTATIONS.length + 1} snapshots plus threshold edge cases.
             Edit the JSON and the output updates as you type.
           </p>
@@ -416,10 +413,10 @@ const STEP_TEXT = [
 
 function Path() {
   return (
-    <section id="path" className="card window reveal" data-title="level-1-learn/README.md">
+    <section id="path" className="card window reveal" data-title="REPORT.md">
       <p className="eyebrow">The teachable path</p>
       <h2>Seven steps, each one <em>feeding</em> a named check.</h2>
-      <p className="sub">The order the Learn README teaches the baseline in. Every step ends in a check you can run; <span className="mono">os_ubuntu_24_04</span> sits under all of them.</p>
+      <p className="sub">The order REPORT.md teaches the baseline in. Every step ends in a check you can run; <span className="mono">os_ubuntu_24_04</span> sits under all of them.</p>
       <ol className="steps" style={{ marginTop: 16 }}>
         {stepTitles.map((t, i) => (
           <li key={t}><span className="n">{i + 1}</span><div>
@@ -434,27 +431,18 @@ function Path() {
 }
 
 function Roadmap() {
-  const levels = [
-    ['Level 1', 'Learn', learnReadme, `${base.passed} of ${base.total} checks on the recorded snapshot; ${testCount} unit tests.`],
-    ['Level 2', 'Build', buildReadme, null],
-    ['Level 3', 'Deep', deepReadme, null],
-  ];
+  const done = stages.filter(([, st]) => st === 'DONE').length;
   return (
-    <section id="roadmap" className="card window reveal" data-title="ROADMAP">
-      <p className="eyebrow">Roadmap status</p>
-      <h2>Only Level 1 is done. Build and Deep have <em>no results</em> yet.</h2>
-      <p className="sub">Status lines are read from each level's README, scope from SPEC.md. Nothing here is a progress estimate.</p>
+    <section id="roadmap" className="card window reveal" data-title="LIFECYCLE">
+      <p className="eyebrow">Lifecycle</p>
+      <h2>{done} of {stages.length} stages done. Verdict: <em>{verdict}</em>.</h2>
+      <p className="sub">Stages and verdict are read from README.md; the plan is PROPOSAL.md. Nothing here is a progress estimate.</p>
       <div className="levels">
-        {levels.map(([n, word, md, result]) => {
-          const [status, date] = statusOf(md);
-          return (
-            <div className="tile" key={n}>
-              <div className="head" style={{ marginBottom: 6 }}><h3>{n}, {word}</h3><span className={`pill ${status === 'DONE' ? 'good' : 'warn'}`}>{status}{date ? ` ${date}` : ''}</span></div>
-              <p className="hint" style={{ margin: 0 }}>{scopeOf(word)}</p>
-              <p className="result">{result || 'No results yet. The README table fills only with measured numbers, with method.'}</p>
-            </div>
-          );
-        })}
+        {stages.map(([name, st, date], i) => (
+          <div className="tile" key={name}>
+            <div className="head" style={{ marginBottom: 6 }}><h3>{i + 1}. {name}</h3><span className={`pill ${st === 'DONE' ? 'good' : 'warn'}`}>{st}{date ? ` ${date}` : ''}</span></div>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -463,24 +451,23 @@ function Roadmap() {
 function Limits() {
   const limits = [
     ['Evidence date versus today', `The snapshot is dated ${meta.evidence_date}, ${daysOld} days before today. Server state can drift; only a fresh capture proves today.`],
-    ['Transcribed, not captured', 'The snapshot was copied by hand from the build record. The transcription step is a link in the chain of trust that no test covers.'],
-    ['Checked off the server', 'The checker is portable Python and ran on another machine. The capture is the part that needs the server.'],
+    ['Recovery not measured', 'Passing the baseline says the server is configured as intended. How fast it comes back after a loss is PROPOSAL.md, H1 to H7, not yet run.'],
+    ['No redundancy in the pool', 'labvg spans three disks with no mirror, and the only verified backup is one archive from 2026-10-26. Losing one disk loses the pool.'],
     ['Cockpit taught from the record', 'The Cockpit view is described from the build record and its screenshot, not from a live session.'],
     ['Weak check: backup', `verified_config_backup only checks that a backup is marked present and its hash is 64 hex characters long. It never compares the hash with the file.`],
     ['Weak check: journal', `services_and_logs accepts a self-reported string, journal_check == "${policy.journal}".`],
     ['Unexplained floor', `cockpit_dashboard wants version ≥ ${policy.minCockpit}, with no stated reason for that number.`],
     ['One host, not a tool', `The interface (${policy.iface}), address (${policy.address}), approved ports (${policy.approvedPorts.join(', ')}) and subnet are fixed in baseline_check.py. It checks this machine, not any server.`],
     ['The firewall explorer is a model', 'It evaluates the recorded ufw rules in your browser. It never contacts the server and ignores loopback, established connections and IPv6.'],
-    ['Capture script is partial', 'capture_snapshot.sh prints only the os and ssh fields. Its output would fail most checks, so capture-to-check has not been shown end to end.'],
-  ];
+      ];
   const cmds = [
     `git clone ${REPO}.git && cd server-and-networking-lab`,
     'python3 tests/test_smoke.py',
-    'python3 -m unittest discover -s tests -p "test_learn*.py" -v',
-    'python3 level-1-learn/run_check.py',
+    'python3 -m unittest discover -s tests -p "test_*.py" -v',
+    'python3 src/make_results.py --check',
     'cd site && npm ci && npm run build',
   ];
-  const docs = [['SPEC.md', 'Spec', 'Scope and acceptance'], ['level-1-learn/README.md', 'Learn README', 'Path, results, limits'], ['docs/research-review.md', 'Research review', 'Rubric grade and gaps'], ['DOSSIER.md', 'Dossier', 'Past, present, future'], ['level-1-learn/baseline_check.py', 'Checker', 'The ten checks'], ['tests/test_learn_baseline.py', 'Tests', `${testCount} unit tests`]];
+  const docs = [['PROPOSAL.md', 'Proposal', 'Question, targets, design'], ['REPORT.md', 'Report', 'Baseline, findings, limits'], ['docs/decisions/0001-approved-firewall-ports.md', 'Decision 0001', 'Approved firewall ports'], ['CHANGELOG.md', 'Changelog', 'Every change, dated'], ['src/baseline_check.py', 'Checker', 'The ten checks'], ['tests/test_baseline.py', 'Tests', `${testCount} unit tests`]];
   return (
     <section id="limits" className="card window reveal" data-title="LIMITS.txt">
       <p className="eyebrow">Limits and method</p>

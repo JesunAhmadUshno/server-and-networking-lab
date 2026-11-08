@@ -1,16 +1,23 @@
 name: ci
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
-  smoke:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: scaffold smoke test
+          python-version: ${{ matrix.python-version }}
+      - name: layout check
         run: python tests/test_smoke.py
-      - name: level 1 learn tests
-        run: python -m unittest discover -s tests -p "test_learn*.py" -v
-      - name: level 1 baseline check on recorded snapshot
-        run: python level-1-learn/run_check.py
+      - name: unit and mutation tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: baseline check on the current live capture
+        run: python src/run_check.py experiments/snapshots/r610-snapshot-2026-11-08-live.json
+      - name: results reproduced from the evidence
+        run: python src/make_results.py --check
