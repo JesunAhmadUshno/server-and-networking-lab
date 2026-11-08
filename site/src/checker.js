@@ -41,6 +41,7 @@ export function parsePolicy(src) {
   const net = need(src, /net\.get\("name"\) == "([^"]+)" and net\.get\("subnet"\) == "([^"]+)"/, 'the labnet rule');
   const svc = need(src, /needed = \[([^\]]+)\]/, 'the service list');
   const logs = need(src, /logs == "([^"]+)"/, 'the journal rule');
+  const bak = need(src, /^EXPECTED_BACKUP_SHA256 = "([0-9a-f]{64})"/m, 'the recorded backup hash');
   return {
     osId: os[1], osPrefix: os[2],
     iface: ip[1], address: ip[2], mode: ip[3],
@@ -49,7 +50,7 @@ export function parsePolicy(src) {
     pool: st[1], pvCount: +st[2], minTotalGb: +st[3],
     cockpitPort: +cpPort[1], minCockpit: +cpVer[1],
     labnet: net[1], labnetSubnet: net[2],
-    services: strings(svc[1]), journal: logs[1],
+    services: strings(svc[1]), journal: logs[1], backupSha: bak[1],
     checkNames: [...src.matchAll(/\("(\w+)", check_\w+\)/g)].map((m) => m[1]),
   };
 }
@@ -108,9 +109,9 @@ const CHECKS = {
     const e = get(s, ['updates', 'automatic_security_updates'], false);
     return [e === true, `automatic_security_updates=${pyStr(e)}`];
   },
-  verified_config_backup(s) {
-    const b = obj(get(s, ['backup'], {})), sha = pyStr(b.sha256 ?? '');
-    return [b.present === true && sha.length === 64 && /^[0-9a-f]*$/.test(sha), `present=${pyStr(b.present)} sha256_len=${sha.length}`];
+  verified_config_backup(s, p) {
+    const b = obj(get(s, ['backup'], {})), sha = pyStr(b.sha256 ?? ''), match = sha === p.backupSha;
+    return [b.present === true && match, `present=${pyStr(b.present)} sha256_matches_record=${pyStr(match)}`];
   },
 };
 

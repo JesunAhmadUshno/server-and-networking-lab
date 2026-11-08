@@ -1,11 +1,10 @@
 """Admin baseline checker for a Linux server snapshot.
 
 Dependency-free. It reads a snapshot JSON (an evidence bundle captured
-from a server, see capture_snapshot.sh) and checks the baseline that
-Level 1 teaches: key-only SSH, a static address, a LAN-only firewall,
+from a server, see capture_snapshot.sh) and checks the admin baseline: key-only SSH, a static address, a LAN-only firewall,
 a named storage pool, the Cockpit dashboard, an isolated lab network,
 running services with logs, automatic security updates, and a verified
-config backup. Every check returns a name, a pass flag, and the value
+config backup whose hash matches the one recorded at backup time. Every check returns a name, a pass flag, and the value
 it actually saw, so a reader can audit the result without trusting a
 summary line.
 """
@@ -49,6 +48,8 @@ REQUIRED_PORTS = [22, 9090]
 LAN_SOURCE = "192.168.1.0/24"
 APPROVED_LAN_PORTS = [22, 3389, 9001, 9090]
 APPROVED_TAILNET = {"tailscale0": [9001]}
+# SHA-256 of /srv/backup/pre-perc-2026-10-26.tar.gz as recorded at backup time (2026-10-26).
+EXPECTED_BACKUP_SHA256 = "4568177d3cddd330f909c33ee4e24ef412d8c81df273e313ae787b5e1dcc3a58"
 
 
 def check_firewall(snap):
@@ -109,8 +110,8 @@ def check_auto_updates(snap):
 def check_backup(snap):
     backup = _get(snap, "backup", default={}) or {}
     sha = str(backup.get("sha256", ""))
-    ok = backup.get("present") is True and len(sha) == 64 and all(c in "0123456789abcdef" for c in sha)
-    return ok, "present=%s sha256_len=%d" % (backup.get("present"), len(sha))
+    ok = backup.get("present") is True and sha == EXPECTED_BACKUP_SHA256
+    return ok, "present=%s sha256_matches_record=%s" % (backup.get("present"), sha == EXPECTED_BACKUP_SHA256)
 
 
 CHECKS = [

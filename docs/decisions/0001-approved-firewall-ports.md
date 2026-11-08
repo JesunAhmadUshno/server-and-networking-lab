@@ -1,6 +1,6 @@
 # 0001: Firewall baseline is an approved list, not an exact match
 
-Date: 2026-11-07. Status: accepted. Decided by: the Owner.
+Date: 2026-11-07. Status: accepted. Decided by: Jesun Ahmad Ushno.
 
 ## Context
 
@@ -14,7 +14,7 @@ desktop logins.
 
 ## Decision
 
-Keep both. The firewall check accepts an approved list:
+I kept both. The firewall check accepts an approved list:
 22 and 9090 required from 192.168.1.0/24; 3389 and 9001 allowed from
 192.168.1.0/24; 9001 allowed on tailscale0. Any other port, source or
 interface fails. Recorded as REQUIRED_PORTS, APPROVED_LAN_PORTS and

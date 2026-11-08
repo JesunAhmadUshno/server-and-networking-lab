@@ -1,19 +1,46 @@
-# Report: server-and-networking-lab (P23)
+# Report: server-and-networking-lab
 
-Status: BASELINE 2026-11-08. Sections 1 to 3 report the baseline. The
-recovery results (PROPOSAL.md, H1 to H7) are added here as they are
-measured; none are measured yet.
+Status: BASELINE 2026-11-08. Recovery (PROPOSAL.md, H1 to H3) is not
+measured yet; results are added below as they are measured.
 
-## 1. Baseline: the idea in one paragraph
+## Current state
 
-A server you can trust is a short list of facts you can check, not a
-feeling about a machine. The baseline turns the admin setup into that
-list: who can log in and how, which services run, where the logs are,
-how storage is pooled, which network the machine sits on, and which
-dashboard shows it all. Each fact becomes one named check in
-baseline_check.py, and each check prints the value it actually saw.
+| Evidence | Result |
+| --- | --- |
+| Live capture 2026-11-08 (current) | 10 of 10 checks pass |
+| Live capture 2026-11-07 | 10 of 10 against today's approved list (9 of 10 on the day, see Findings) |
+| Recorded snapshot 2026-10-26 (transcribed from the build record) | 10 of 10 |
+| Unit tests | 18 pass, with a failing (mutation) case for every check |
+| Results | results/baseline.json reproduced from experiments/ in CI |
 
-## 2. The baseline, in order
+## Findings
+
+**Drift caught on the first live run (2026-11-07).** The checker failed
+the firewall check on a live capture. Two ports, 3389 (xrdp) and 9001
+(a Penpot design server), had been opened after the recorded baseline.
+Before removing anything, a guard step checked what was listening on
+them. Both services were in active use, so I decided to keep them. The
+check was then changed from an exact match to an approved list, and the
+reason is recorded in docs/decisions/0001. The same run exposed a bug in
+the capture script, which skipped interface-scoped ufw rules (9001 on
+tailscale0). The script was fixed, and the incomplete capture is kept
+as captured. The 2026-11-08 re-capture with the fixed script records
+all five rules and passes.
+
+**Weaknesses an independent review found (2026-11-08).**
+- verified_config_backup only checked that the hash was 64 hex
+  characters. It now compares the hash with the value recorded at
+  backup time.
+- firewall_lan_only reads ufw's rule list. Penpot runs in Docker, and
+  Docker-published ports bypass ufw, so "LAN-only" is not proven for
+  9001. The capture script now records the sockets actually listening;
+  a check on them is added once the next capture shows the real list.
+- services_and_logs accepts any error count. The journal showed 923
+  error-priority lines on 2026-11-07 and 958 on 2026-11-08. The capture
+  now records the top five error sources. A ceiling is set from that
+  triage, not guessed.
+
+## Baseline, in order
 
 1. Users and keys. One admin account, SSH on port 22 with public-key
    authentication only (PasswordAuthentication no, verified with
@@ -39,70 +66,23 @@ baseline_check.py, and each check prints the value it actually saw.
    place. It opens in limited (read-only) access; administrative
    access is an explicit elevation inside the session.
 6. Firewall and updates. ufw is active, default deny incoming, and
-   22 and 9090 are open to 192.168.1.0/24 only; since 2026-11-07 the
-   approved list also allows 3389 (xrdp) and 9001 (Penpot), see below.
+   22 and 9090 must be open to 192.168.1.0/24; 3389 (xrdp) and 9001
+   (Penpot) are also approved (docs/decisions/0001).
    Automatic security updates are on.
-7. Backup proof. A verified config backup sits on the pool at
+7. Backup proof. A config backup sits at
    /srv/backup/pre-perc-2026-10-26.tar.gz, SHA256
    4568177d3cddd330f909c33ee4e24ef412d8c81df273e313ae787b5e1dcc3a58.
+   The checker compares each capture's hash with this recorded value.
    A backup without a hash is a hope, not a backup.
 
-## 3. Evidence: how a snapshot is taken, and what the captures found
+## How a snapshot is taken
 
-capture_snapshot.sh is the read-only capture script. Run it on the
-server; it changes nothing and prints every field the checker reads
-(unreadable fields come out as null, so the checker fails them instead
-of guessing). Save the result as a new dated file under experiments/snapshots/,
-never over an older snapshot, then run the checker on it.
-
-### First live capture, 2026-11-07: 9 of 10, firewall drift found
-
-experiments/snapshots/r610-snapshot-2026-11-07-live.json was captured on the R610
-itself by capture_snapshot.sh at 2026-11-07 22:53 UTC. Checker result:
-9 of 10. The one failure is real drift, not a capture error: the
-firewall still denies incoming by default and still limits every rule
-to 192.168.1.0/24, but it now also allows ports 3389 (RDP) and 9001,
-which the 2026-10-26 baseline did not. The baseline is not edited to
-make the check pass.
-
-Follow-up the same evening: before any rule was removed, a guard step
-checked what listens on the two ports. 3389 is xrdp (remote desktop)
-and 9001 is a Penpot design server in Docker, both in active use, so
-no rule was deleted and the decision went back to the Owner. The
-check also showed a fifth rule, 9001 allowed on the tailscale0
-interface from any source, which this snapshot does not contain: the
-first version of capture_snapshot.sh skipped interface-scoped ufw
-rules. The script now records them (with an "interface" field), and
-the snapshot file is kept as captured, incomplete on that one rule.
-
-Owner decision, 2026-11-07: keep both. The firewall check changed
-from "exactly ports 22 and 9090" to an approved list, recorded in
-src/baseline_check.py (docs/decisions/0001): 22 and 9090 must be open to 192.168.1.0/24; 3389
-(xrdp) and 9001 (Penpot) may be; 9001 may also be open on tailscale0;
-any other rule, source or interface fails. Both snapshots now score
-10 of 10. Four tests pin the new rule (approved ports pass, an
-unapproved LAN port fails, a tailnet rule on an unapproved port fails,
-a missing SSH rule fails). The next capture, with the fixed script,
-must include the tailscale0 rule and still score 10 of 10.
-
-### Re-capture, 2026-11-08: 10 of 10, complete
-
-experiments/snapshots/r610-snapshot-2026-11-08-live.json was captured at
-2026-11-08 05:13 UTC with the fixed script. It records all five ufw
-rules, including 9001 on tailscale0, and scores 10 of 10 against the
-approved list. The backup hash is unchanged. This is the current live
-evidence; the 2026-11-07 file is kept as captured.
-
-Also from the live capture: the backup file's SHA-256 equals the hash
-recorded on 2026-10-26 (the backup is unchanged), and the journal
-showed 923 error-priority lines in the current boot (12 days of
-uptime), now recorded in the snapshot rather than self-reported.
-
-The 2026-10-26 snapshot stays in experiments/snapshots/ as the transcribed record
-it always was (from TECHNICAL-DOCUMENTATION.md of the R610 Ubuntu
-install goal).
-
-## Run it
+src/capture_snapshot.sh runs on the server and only reads state. It
+prints every field the checker needs; anything unreadable becomes null,
+so the checker fails it instead of guessing. Each result is saved as a
+new dated file in experiments/snapshots/ and never edited. From
+2026-11-08 the kernel version is published as major.minor only
+(docs/decisions/0003).
 
 ```text
 python3 -m unittest discover -s tests -p "test_*.py" -v
@@ -110,62 +90,16 @@ python3 src/run_check.py experiments/snapshots/r610-snapshot-2026-11-08-live.jso
 python3 src/make_results.py --check
 ```
 
-No dependencies beyond Python 3. The checker runs anywhere; only the
-capture step needs the server.
+## Limits
 
-## Results on the recorded snapshot (2026-11-04, Muse VM, Python 3.12.3)
-
-Recorded snapshot: Dell PowerEdge R610, hostname r610, Ubuntu
-24.04.5, kernel 6.8.0-147-generic, evidence date 2026-10-26.
-
-| Check | Result |
-| --- | --- |
-| os_ubuntu_24_04 | PASS: ubuntu, 24.04.5 |
-| ssh_key_only | PASS: password_authentication=no, root locked |
-| static_ip_plan | PASS: eno1, 192.168.1.50/24, static |
-| firewall_lan_only | PASS: deny incoming, ports 22 and 9090 from 192.168.1.0/24 only |
-| storage_pool_labvg | PASS: labvg, 3 PVs, 1531.87 GB total |
-| cockpit_dashboard | PASS: Cockpit 314, port 9090, socket-activated, machines plugin |
-| labnet_isolated | PASS: 10.99.0.0/24, forward none, autostart |
-| services_and_logs | PASS: ssh, cockpit.socket, libvirtd active; journal checked |
-| automatic_security_updates | PASS: on |
-| verified_config_backup | PASS: backup present, SHA256 recorded (64 hex chars) |
-
-Result: 10 of 10 checks passed on the recorded snapshot. 9 unit
-tests pass, including six mutation tests: each broken snapshot
-(password auth on, labnet forwarding set, pool shrunk, extra open
-port, bad backup hash, wrong static address) fails exactly the one
-check it breaks.
-
-Update after the 2026-11-04 run: four more mutation tests (older
-Ubuntu release, Cockpit without the machines plugin, libvirtd
-stopped, automatic updates off) bring the suite to 13 tests, with a
-failing case for all 10 checks. The site/ dashboard's build also
-runs a parity check: a JavaScript port of the checker must match
-this Python checker, flag for flag and detail for detail, on the
-recorded snapshot, all 10 mutations and threshold edge cases.
-
-## Results across all snapshots
-
-results/baseline.json, regenerated by src/make_results.py: the
-2026-10-26 recorded snapshot, the 2026-11-07 live capture and the
-2026-11-08 live capture each score 10 of 10 against the approved list.
-17 unit tests pass, with a failing case for every check.
-
-## Limits, stated plainly
-
-- Recovery is not measured yet. Passing the baseline says the server is
-  configured as intended today; it says nothing about how fast it comes
-  back after a loss. That is PROPOSAL.md, H1 to H7.
-- labvg has no redundancy and the only verified backup is one archive
+- Recovery is not measured. Passing the baseline says the server is
+  configured as intended; it says nothing about recovery after a loss.
+- labvg has no redundancy, and the only verified backup is one archive
   from 2026-10-26 (PROPOSAL.md, Known risk).
+- The server reports on itself. No outside scan of its open ports has
+  been compared with its own view yet.
 - One host, not a tool: the expected interface, address, ports and
   subnet are fixed in src/baseline_check.py.
-- verified_config_backup compares the recorded hash only in the live
-  captures (the capture script hashes the file); the 2026-10-26 record
-  carries a transcribed hash.
-- The journal showed 923 error-priority lines on 2026-11-07 and 958 on
-  2026-11-08 in the same boot. No check bounds that count yet; H4's
-  monitoring will.
-- The Cockpit view is taught from the build record, not from a live
-  session.
+- The Cockpit view is taught from the build record, not a live session.
+
+History of every change: CHANGELOG.md.
