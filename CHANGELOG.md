@@ -5,6 +5,19 @@ Versions follow Semantic Versioning; no release is tagged yet.
 
 ## [Unreleased]
 
+### Added
+- 2026-11-08: Recovery harness. src/nightly_backup.sh (H1: hashed, root-only (umask 077)
+  backup, off-server copy, far-side hash check, every night logged,
+  failures included) and src/drill.sh (H2, H3: timed trial, restore
+  verified with tar --compare, records never overwritten). The results
+  script scores both into results/recovery.json. 16 new tests. Runbook
+  in docs/RUNBOOK.md, including the monitoring job.
+- 2026-11-08: PROPOSAL.md locked by tag proposal-v1 with the pass lines
+  24 h, 30 min and 60 min. Before the lock, H2's pass line was changed
+  from "the baseline checker passes on the VM" (impossible: the checker
+  expects the real host's address and disks) to a tar --compare of every
+  restored file, and only the first 7 nights and first 3 trials count.
+
 ### Changed
 - 2026-11-08: Independent review applied. The backup check compares the
   hash with the recorded value (it only checked the length before).

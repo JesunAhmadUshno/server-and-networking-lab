@@ -1,7 +1,8 @@
 # Report: server-and-networking-lab
 
-Status: BASELINE 2026-11-08. Recovery (PROPOSAL.md, H1 to H3) is not
-measured yet; results are added below as they are measured.
+Status: BASELINE 2026-11-08. The recovery tests (PROPOSAL.md, H1 to H3)
+are locked by tag proposal-v1 and the harness is built and tested; no
+test has run yet. Results are added below as they are measured.
 
 ## Current state
 
@@ -10,8 +11,18 @@ measured yet; results are added below as they are measured.
 | Live capture 2026-11-08 (current) | 10 of 10 checks pass |
 | Live capture 2026-11-07 | 10 of 10 against today's approved list (9 of 10 on the day, see Findings) |
 | Recorded snapshot 2026-10-26 (transcribed from the build record) | 10 of 10 |
-| Unit tests | 18 pass, with a failing (mutation) case for every check |
-| Results | results/baseline.json reproduced from experiments/ in CI |
+| Unit tests | 34 pass: a failing (mutation) case for every check, every pass and miss case of the recovery scoring, and both server scripts run end to end |
+| Results | results/baseline.json and results/recovery.json reproduced from experiments/ in CI |
+
+## Recovery results
+
+| Test | Pass line | Result |
+| --- | --- | --- |
+| H1 nightly backup, off-server copy | first 7 nights verified, no gap over 24 h | not run |
+| H2 configuration restore | each of 3 trials at most 30 min, verified | not run |
+| H3 one disk lost | each of 3 trials at most 60 min, verified, backup at most 24 h old | not run |
+
+Steps: docs/RUNBOOK.md. Scores: results/recovery.json.
 
 ## Findings
 
