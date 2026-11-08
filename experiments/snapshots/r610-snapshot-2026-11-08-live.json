@@ -37,9 +37,88 @@
   ],
   "default_incoming": "deny"
  },
+ "listening": [
+  {
+   "address": "0.0.0.0",
+   "port": 22,
+   "process": "sshd"
+  },
+  {
+   "address": "::",
+   "port": 22,
+   "process": "sshd"
+  },
+  {
+   "address": "10.99.0.1",
+   "port": 53,
+   "process": "dnsmasq"
+  },
+  {
+   "address": "192.168.122.1",
+   "port": 53,
+   "process": "dnsmasq"
+  },
+  {
+   "address": "*",
+   "port": 3389,
+   "process": "xrdp"
+  },
+  {
+   "address": "0.0.0.0",
+   "port": 8902,
+   "process": "python3"
+  },
+  {
+   "address": "100.112.219.14",
+   "port": 9001,
+   "process": "docker-proxy"
+  },
+  {
+   "address": "192.168.1.50",
+   "port": 9001,
+   "process": "docker-proxy"
+  },
+  {
+   "address": "*",
+   "port": 9090,
+   "process": "cockpit-tls"
+  },
+  {
+   "address": "100.112.219.14",
+   "port": 32913,
+   "process": "tailscaled"
+  },
+  {
+   "address": "fd7a:115c:a1e0::ec31:db0f]",
+   "port": 55280,
+   "process": "tailscaled"
+  }
+ ],
  "logs": {
-  "errors_this_boot": 958,
-  "journal_check": "checked"
+  "errors_this_boot": 986,
+  "journal_check": "checked",
+  "top_error_sources": [
+   {
+    "lines": 678,
+    "source": "smartd"
+   },
+   {
+    "lines": 143,
+    "source": "xrdp"
+   },
+   {
+    "lines": 96,
+    "source": "xrdp-sesman"
+   },
+   {
+    "lines": 27,
+    "source": "kernel"
+   },
+   {
+    "lines": 20,
+    "source": "sudo"
+   }
+  ]
  },
  "network": {
   "labnet": {
@@ -58,7 +137,7 @@
  },
  "os": {
   "id": "ubuntu",
-  "kernel": "6.8.0-147-generic",
+  "kernel": "6.8",
   "version_id": "24.04"
  },
  "services": [
@@ -76,11 +155,11 @@
   }
  ],
  "snapshot_meta": {
-  "captured_at": "2026-11-08T05:13:47+0000",
+  "captured_at": "2026-11-08T12:31:59+0000",
   "evidence_date": "2026-11-08",
   "hostname": "r610",
   "machine": "hostname r610",
-  "source": "live capture by level-1-learn/capture_snapshot.sh on the server"
+  "source": "live capture by src/capture_snapshot.sh on the server"
  },
  "ssh": {
   "password_authentication": "no",
