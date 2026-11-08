@@ -86,6 +86,14 @@ unapproved LAN port fails, a tailnet rule on an unapproved port fails,
 a missing SSH rule fails). The next capture, with the fixed script,
 must include the tailscale0 rule and still score 10 of 10.
 
+### Re-capture, 2026-11-08: 10 of 10, complete
+
+evidence/r610-snapshot-2026-11-08-live.json was captured at
+2026-11-08 05:13 UTC with the fixed script. It records all five ufw
+rules, including 9001 on tailscale0, and scores 10 of 10 against the
+approved list. The backup hash is unchanged. This is the current live
+evidence; the 2026-11-07 file is kept as captured.
+
 Also from the live capture: the backup file's SHA-256 equals the hash
 recorded on 2026-10-26 (the backup is unchanged), and the journal
 showed 923 error-priority lines in the current boot (12 days of

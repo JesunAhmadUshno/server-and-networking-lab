@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useId } from 'react';
 import snapshot from '../../level-1-learn/evidence/r610-snapshot-2026-10-26.json';
-import live from '../../level-1-learn/evidence/r610-snapshot-2026-11-07-live.json';
+import live from '../../level-1-learn/evidence/r610-snapshot-2026-11-08-live.json';
 import pySrc from '../../level-1-learn/baseline_check.py?raw';
 import testSrc from '../../tests/test_learn_baseline.py?raw';
 import readme from '../../README.md?raw';
@@ -18,7 +18,7 @@ const SNAP_PATH = 'level-1-learn/evidence/r610-snapshot-2026-10-26.json';
 const policy = parsePolicy(pySrc);
 const base = runChecks(snapshot, policy);
 const liveRun = runChecks(live, policy);
-const LIVE_PATH = 'level-1-learn/evidence/r610-snapshot-2026-11-07-live.json';
+const LIVE_PATH = 'level-1-learn/evidence/r610-snapshot-2026-11-08-live.json';
 const meta = snapshot.snapshot_meta;
 const machineName = meta.machine.split(',')[0].trim();
 const machineShort = machineName.split(' ').pop();
@@ -124,7 +124,7 @@ function Hero() {
       </p>
       <div className="recorded" role="note">
         <b>Live capture {live.snapshot_meta.evidence_date}: {liveRun.passed} of {liveRun.total} pass on the running {live.snapshot_meta.hostname}.</b>
-        <span>Captured on the server by capture_snapshot.sh. It found two firewall rules added after the recorded baseline, xrdp remote desktop (3389) and the Penpot design server (9001); the Owner approved both on 2026-11-07 and they are now on the baseline's approved list. A Penpot rule on the Tailscale interface was missed by the first capture script and is checked on the next capture.</span>
+        <span>Captured on the server by capture_snapshot.sh. It found two firewall rules added after the recorded baseline, xrdp remote desktop (3389) and the Penpot design server (9001); the Owner approved both on 2026-11-07 and they are now on the baseline's approved list. This 2026-11-08 re-capture, with the fixed script, also records the Penpot rule on the Tailscale interface, and it is approved too.</span>
         <Terminal summary={{ ...liveRun, results: liveRun.results.filter((r) => !r.pass || r.check === 'firewall_lan_only') }} label="Firewall check on the live capture" path={LIVE_PATH} />
       </div>
       <div className="actions">

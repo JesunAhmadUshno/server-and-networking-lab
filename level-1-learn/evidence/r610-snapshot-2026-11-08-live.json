@@ -1,0 +1,112 @@
+{
+ "backup": {
+  "path": "/srv/backup/pre-perc-2026-10-26.tar.gz",
+  "present": true,
+  "sha256": "4568177d3cddd330f909c33ee4e24ef412d8c81df273e313ae787b5e1dcc3a58"
+ },
+ "cockpit": {
+  "machines_plugin": true,
+  "port": 9090,
+  "socket_activated": true,
+  "version": 314
+ },
+ "firewall": {
+  "active": true,
+  "allowed_from_lan": [
+   {
+    "port": 22,
+    "source": "192.168.1.0/24"
+   },
+   {
+    "port": 9090,
+    "source": "192.168.1.0/24"
+   },
+   {
+    "port": 3389,
+    "source": "192.168.1.0/24"
+   },
+   {
+    "port": 9001,
+    "source": "192.168.1.0/24"
+   },
+   {
+    "interface": "tailscale0",
+    "port": 9001,
+    "source": "Anywhere"
+   }
+  ],
+  "default_incoming": "deny"
+ },
+ "logs": {
+  "errors_this_boot": 958,
+  "journal_check": "checked"
+ },
+ "network": {
+  "labnet": {
+   "autostart": true,
+   "forward": "none",
+   "host_address": "10.99.0.1/24",
+   "name": "labnet",
+   "subnet": "10.99.0.0/24"
+  },
+  "primary_interface": {
+   "address": "192.168.1.50/24",
+   "gateway": "192.168.1.1",
+   "mode": "static",
+   "name": "eno1"
+  }
+ },
+ "os": {
+  "id": "ubuntu",
+  "kernel": "6.8.0-147-generic",
+  "version_id": "24.04"
+ },
+ "services": [
+  {
+   "name": "ssh",
+   "state": "active"
+  },
+  {
+   "name": "cockpit.socket",
+   "state": "active"
+  },
+  {
+   "name": "libvirtd",
+   "state": "active"
+  }
+ ],
+ "snapshot_meta": {
+  "captured_at": "2026-11-08T05:13:47+0000",
+  "evidence_date": "2026-11-08",
+  "hostname": "r610",
+  "machine": "hostname r610",
+  "source": "live capture by level-1-learn/capture_snapshot.sh on the server"
+ },
+ "ssh": {
+  "password_authentication": "no",
+  "port": 22,
+  "root_password_locked": true
+ },
+ "storage": {
+  "pool": {
+   "name": "labvg",
+   "physical_volumes": [
+    {
+     "device": "sda",
+     "size_gb": 464.75
+    },
+    {
+     "device": "sdc",
+     "size_gb": 136.12
+    },
+    {
+     "device": "sdd",
+     "size_gb": 931.0
+    }
+   ]
+  }
+ },
+ "updates": {
+  "automatic_security_updates": true
+ }
+}
