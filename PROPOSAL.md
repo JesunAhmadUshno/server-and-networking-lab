@@ -1,10 +1,9 @@
 # Proposal: server-and-networking-lab
 
-Status: DRAFT 2026-11-08, revision 2 (scope cut to three tests after an
-independent three-reviewer critique; see docs/decisions/0002). Not
-locked. The pass lines below are proposed values that I set before the
-tag. Once set, this file is tagged `proposal-v1` and never edited
-again. No test runs before the tag exists.
+Status: LOCKED 2026-11-08 by tag `proposal-v1`, revision 3. The scope
+was cut to three tests after an independent three-reviewer critique
+(docs/decisions/0002). This file is never edited after the tag, and no
+test ran before it.
 
 ## Question
 
@@ -63,24 +62,28 @@ disk loses the pool. The only verified backup is one configuration
 archive from 2026-10-26, and it may sit on the same pool it protects.
 H1 tests the fix.
 
-## Hypotheses (proposed pass lines; set before the tag)
+## Hypotheses and pass lines
 
 | # | Test | Runs on | Pass line |
 | --- | --- | --- | --- |
-| H1 | Nightly hashed backup of configuration and pool data, with a copy kept off the server | the real server | 7 consecutive nights succeed; every night's off-server copy matches its hash; data at risk at most 24 h |
-| H2 | Restore configuration from the off-server copy | a test VM on labnet | each trial at most 30 min, ending with the baseline checker passing on the VM |
-| H3 | Lose one disk of a pool built like labvg and recover from the off-server copy | a test VM with three virtual disks | each trial at most 60 min; data lost no older than H1's last good night; time also reported per GB restored |
+| H1 | Nightly hashed backup of the configuration, with a copy kept off the server | the real server | the first 7 nights all succeed, with no retries; every night's off-server copy matches its hash; no gap between nights over 24 h (one minute allowed for scheduler start jitter), so data at risk is at most 24 h |
+| H2 | Restore configuration from the off-server copy | a test VM on labnet | each of the first 3 trials at most 30 min, ending with `tar --compare` finding every restored file identical to the off-server copy |
+| H3 | Lose one disk of a pool built like labvg and recover from the off-server copy | a test VM with three virtual disks | each of the first 3 trials at most 60 min, verified by `tar --compare`; restored from a backup at most 24 h old when the fault was injected; time also reported per GB restored |
 
 ## Design
 
 - Order: H1 starts first, because it runs unattended for 7 nights. H2
   and H3 run during that week.
-- Three trials each for H2 and H3, in randomised order. Every trial is
-  reported, not only the median. The first trial is highlighted because
-  later ones benefit from practice.
-- Each trial will be timed by src/drill.sh (built before the tag) and
-  logged as a dated file in
-  experiments/drills/.
+- Three trials each for H2 and H3, in the random order printed by
+  `src/drill.sh order` and committed before the first trial. Every
+  trial is reported, not only the median. The first trial is
+  highlighted because later ones benefit from practice.
+- Each trial is timed by src/drill.sh and logged as a dated file in
+  experiments/drills/. The clock runs from just after the fault until
+  the restore is verified. H1 nights are logged by
+  src/nightly_backup.sh. Steps are in docs/RUNBOOK.md.
+- Only the first 7 nights and the first 3 trials of each drill count.
+  A record is never overwritten.
 - H2 and H3 never touch the live host's services, firewall or disks.
   H1 only adds a scheduled backup job and an off-server copy.
 - Monitoring: a scheduled run of the baseline checker that alerts on any
@@ -95,12 +98,18 @@ H1 tests the fix.
 - One operator: there is no second person, so "anyone can follow the
   runbook" is not claimed.
 - Three trials give a range, not a statistical estimate.
+- H1 backs up configuration only. Pool data is backed up in H3 on the
+  test VM; backing up the full 1.5 TB pool is outside this proposal.
+- `tar --compare` proves the files match the backup, not that the
+  services on them start. H2 restores files, not a running system.
 
 ## Analysis plan
 
 Each hypothesis passes or misses on its pass line exactly as written.
 A miss is reported with its measured value, and targets are never moved
-after the tag. src/make_results.py scores every file in experiments/.
+after the tag. src/make_results.py scores every file in experiments/
+into results/recovery.json, with the pass lines written into the code;
+the tests pin each pass and miss case.
 
 ## Not pre-registered
 

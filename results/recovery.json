@@ -1,0 +1,19 @@
+{
+ "H1": {
+  "max_gap_hours": null,
+  "nights_logged": 0,
+  "nights_scored": 0,
+  "status": "not run",
+  "unverified": []
+ },
+ "H2": {
+  "limit_minutes": 30,
+  "status": "not run",
+  "trials": []
+ },
+ "H3": {
+  "limit_minutes": 60,
+  "status": "not run",
+  "trials": []
+ }
+}
