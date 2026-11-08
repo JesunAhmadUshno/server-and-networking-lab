@@ -11,9 +11,9 @@ import { parsePolicy, runChecks, MUTATIONS, mutate, pythonExpectations, countTes
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const read = (p) => readFileSync(root + p, 'utf8');
-const pySrc = read('level-1-learn/baseline_check.py');
-const testSrc = read('tests/test_learn_baseline.py');
-const snap = JSON.parse(read('level-1-learn/evidence/r610-snapshot-2026-10-26.json'));
+const pySrc = read('src/baseline_check.py');
+const testSrc = read('tests/test_baseline.py');
+const snap = JSON.parse(read('experiments/snapshots/r610-snapshot-2026-10-26.json'));
 const policy = parsePolicy(pySrc);
 
 // Python is the reference implementation: run it on exactly the snapshots the JS side sees.
@@ -29,12 +29,12 @@ const cases = [['recorded snapshot', snap], ...MUTATIONS.map((m) => [m.test, mut
   edge('unapproved LAN port', (s) => { s.firewall.allowed_from_lan.push({ port: 8080, source: '192.168.1.0/24' }); }),
   edge('tailnet rule on an unapproved port', (s) => { s.firewall.allowed_from_lan.push({ port: 22, source: 'Anywhere', interface: 'tailscale0' }); }),
   edge('SSH rule missing', (s) => { s.firewall.allowed_from_lan = s.firewall.allowed_from_lan.filter((r) => r.port !== 22); }),
-  ['live capture 2026-11-07', JSON.parse(read('level-1-learn/evidence/r610-snapshot-2026-11-07-live.json'))],
-  ['live capture 2026-11-08', JSON.parse(read('level-1-learn/evidence/r610-snapshot-2026-11-08-live.json'))],
+  ['live capture 2026-11-07', JSON.parse(read('experiments/snapshots/r610-snapshot-2026-11-07-live.json'))],
+  ['live capture 2026-11-08', JSON.parse(read('experiments/snapshots/r610-snapshot-2026-11-08-live.json'))],
   ['empty snapshot', {}]];
 const py = JSON.parse(execFileSync('python3', ['-I', '-c',
   'import json,sys; sys.path.insert(0, sys.argv[1]); from baseline_check import run_checks; '
-  + 'print(json.dumps([run_checks(s) for s in json.load(sys.stdin)]))', root + 'level-1-learn'],
+  + 'print(json.dumps([run_checks(s) for s in json.load(sys.stdin)]))', root + 'src'],
 { input: JSON.stringify(cases.map((c) => c[1])) }));
 
 cases.forEach(([name, s], i) => assert.deepEqual(runChecks(s, policy), py[i], `JS and Python checkers disagree on ${name}`));

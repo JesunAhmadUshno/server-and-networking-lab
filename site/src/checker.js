@@ -1,4 +1,4 @@
-// JavaScript port of level-1-learn/baseline_check.py.
+// JavaScript port of src/baseline_check.py.
 // The expected values (interface, address, ports, thresholds) are not typed here:
 // parsePolicy() reads them out of the Python source, so the port and the original
 // share one policy. checker.check.mjs runs both on the same snapshots and fails the
@@ -126,7 +126,7 @@ export function runChecks(snapshot, policy) {
 // One line per check, formatted like run_check.py prints it ("%s %-28s %s").
 export const formatRow = (r) => `${r.pass ? 'PASS' : 'FAIL'} ${r.check.padEnd(28)} ${r.detail}`;
 
-// Presets that mirror tests/test_learn_baseline.py. `literal` must appear in the
+// Presets that mirror tests/test_baseline.py. `literal` must appear in the
 // named Python test body and `expected` must equal its assertion: the check enforces both.
 export const MUTATIONS = [
   { test: 'test_password_auth_on_fails_ssh_check_only', label: 'Password login on', literal: '"yes"', expected: 'ssh_key_only', apply: (s) => { s.ssh.password_authentication = 'yes'; } },

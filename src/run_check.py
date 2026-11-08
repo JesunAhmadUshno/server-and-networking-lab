@@ -1,10 +1,10 @@
 """Run the admin baseline checker on a snapshot and print the table.
 
 Usage:
-  python level-1-learn/run_check.py [snapshot.json]
+  python3 src/run_check.py [snapshot.json]
 
 With no argument it checks the recorded R610 snapshot in
-level-1-learn/evidence/. Exit code is 0 only when every check passes.
+experiments/snapshots/. Exit code is 0 only when every check passes.
 """
 import os
 import sys
@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from baseline_check import load_snapshot, run_checks
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT = os.path.join(HERE, "evidence", "r610-snapshot-2026-10-26.json")
+DEFAULT = os.path.join(HERE, "..", "experiments", "snapshots", "r610-snapshot-2026-10-26.json")
 
 
 def main(argv):

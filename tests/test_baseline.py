@@ -11,10 +11,10 @@ import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "level-1-learn"))
+sys.path.insert(0, os.path.join(ROOT, "src"))
 from baseline_check import run_checks
 
-SNAPSHOT = os.path.join(ROOT, "level-1-learn", "evidence", "r610-snapshot-2026-10-26.json")
+SNAPSHOT = os.path.join(ROOT, "experiments", "snapshots", "r610-snapshot-2026-10-26.json")
 
 
 def load():
