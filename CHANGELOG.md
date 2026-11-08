@@ -6,6 +6,12 @@ Versions follow Semantic Versioning; no release is tagged yet.
 ## [Unreleased]
 
 ### Changed
+- 2026-11-08: Independent review applied. The backup check compares the
+  hash with the recorded value (it only checked the length before).
+  The capture script records listening sockets and the top five error
+  sources, and publishes the kernel as major.minor (decision 0003).
+  PROPOSAL.md is cut to three tests, with prior work cited (decision
+  0002). REPORT.md now leads with the current state.
 - 2026-11-08: Restructured to the portfolio standard v2: README is the
   abstract; PROPOSAL.md (draft) replaces SPEC.md, NOVELTY.md and
   DOSSIER.md; REPORT.md replaces the Learn README; code in src/,

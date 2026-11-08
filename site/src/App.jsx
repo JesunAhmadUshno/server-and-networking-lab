@@ -121,7 +121,7 @@ function Hero() {
       </p>
       <div className="recorded" role="note">
         <b>Live capture {live.snapshot_meta.evidence_date}: {liveRun.passed} of {liveRun.total} pass on the running {live.snapshot_meta.hostname}.</b>
-        <span>Captured on the server by capture_snapshot.sh. It found two firewall rules added after the recorded baseline, xrdp remote desktop (3389) and the Penpot design server (9001); the Owner approved both on 2026-11-07 and they are now on the baseline's approved list. This 2026-11-08 re-capture, with the fixed script, also records the Penpot rule on the Tailscale interface, and it is approved too.</span>
+        <span>Captured on the server by capture_snapshot.sh. It found two firewall rules added after the recorded baseline, xrdp remote desktop (3389) and the Penpot design server (9001); I approved both on 2026-11-07 and they are now on the baseline's approved list. This 2026-11-08 re-capture, with the fixed script, also records the Penpot rule on the Tailscale interface, and it is approved too.</span>
         <Terminal summary={{ ...liveRun, results: liveRun.results.filter((r) => !r.pass || r.check === 'firewall_lan_only') }} label="Firewall check on the live capture" path={LIVE_PATH} />
       </div>
       <div className="actions">
@@ -451,11 +451,11 @@ function Roadmap() {
 function Limits() {
   const limits = [
     ['Evidence date versus today', `The snapshot is dated ${meta.evidence_date}, ${daysOld} days before today. Server state can drift; only a fresh capture proves today.`],
-    ['Recovery not measured', 'Passing the baseline says the server is configured as intended. How fast it comes back after a loss is PROPOSAL.md, H1 to H7, not yet run.'],
+    ['Recovery not measured', 'Passing the baseline says the server is configured as intended. How fast it comes back after a loss is PROPOSAL.md, H1 to H3, not yet run.'],
     ['No redundancy in the pool', 'labvg spans three disks with no mirror, and the only verified backup is one archive from 2026-10-26. Losing one disk loses the pool.'],
     ['Cockpit taught from the record', 'The Cockpit view is described from the build record and its screenshot, not from a live session.'],
-    ['Weak check: backup', `verified_config_backup only checks that a backup is marked present and its hash is 64 hex characters long. It never compares the hash with the file.`],
-    ['Weak check: journal', `services_and_logs accepts a self-reported string, journal_check == "${policy.journal}".`],
+    ['Firewall rules versus open sockets', 'firewall_lan_only reads ufw rules. Docker-published ports (Penpot on 9001) bypass ufw, so LAN-only is not proven for 9001 until the listening-socket check lands.'],
+    ['Weak check: journal', `services_and_logs accepts any error count (958 on 2026-11-08). A ceiling is set after triage of the top error sources.`],
     ['Unexplained floor', `cockpit_dashboard wants version ≥ ${policy.minCockpit}, with no stated reason for that number.`],
     ['One host, not a tool', `The interface (${policy.iface}), address (${policy.address}), approved ports (${policy.approvedPorts.join(', ')}) and subnet are fixed in baseline_check.py. It checks this machine, not any server.`],
     ['The firewall explorer is a model', 'It evaluates the recorded ufw rules in your browser. It never contacts the server and ignores loopback, established connections and IPv6.'],

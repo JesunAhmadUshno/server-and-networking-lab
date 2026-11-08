@@ -58,6 +58,11 @@ class BaselineTests(unittest.TestCase):
         snap["firewall"]["allowed_from_lan"].append({"port": 3389, "source": "0.0.0.0/0"})
         self.assertEqual(failed_names(run_checks(snap)), ["firewall_lan_only"])
 
+    def test_wellformed_but_wrong_backup_hash_fails_backup_only(self):
+        snap = load()
+        snap["backup"]["sha256"] = "0" * 64
+        self.assertEqual(failed_names(run_checks(snap)), ["verified_config_backup"])
+
     def test_bad_backup_hash_fails_backup_only(self):
         snap = copy.deepcopy(load())
         snap["backup"]["sha256"] = "not-a-hash"

@@ -1,22 +1,22 @@
-# server-and-networking-lab (P23)
+# server-and-networking-lab
 
-**Question.** Can a self-hosted server be held to a written baseline that
-catches drift, and be recovered from a configuration or disk loss within
-stated targets?
+**Question.** Can a solo-run server detect its own drift and recover from
+a disk or configuration loss within targets set in advance?
 
-**Headline.** The baseline holds: 10 of 10 checks pass on a live capture
-from the server (2026-11-08). On its first live run (2026-11-07) the
-checker caught real firewall drift, two ports opened after the recorded
-baseline; the Owner approved both and the decision is on record
-(docs/decisions/0001). Recovery targets are not yet measured.
+**Headline.** On its first live run the checker caught real drift: two
+firewall ports opened after the baseline. I checked what was listening
+before changing anything, kept both services, recorded why
+(docs/decisions/0001), fixed the capture bug the run exposed, and kept
+the flawed capture as captured. The current live capture passes 10 of 10.
+Recovery (three timed tests) is planned and not yet measured.
 
 **Field.** Systems and infrastructure. **Job family.** Infrastructure and
 platform engineering.
 
 **Verdict.** Functional, not pre-registered. Tests pass in CI on Python
 3.11 and 3.12 and the results are reproduced from the evidence by one
-command. Recovery drills are planned under PROPOSAL.md, which is a draft
-until its targets are locked.
+command. Recovery tests are planned in PROPOSAL.md, a draft until its
+pass lines are locked by tag.
 
 Live dashboard: https://jesunahmadushno.github.io/server-and-networking-lab/
 

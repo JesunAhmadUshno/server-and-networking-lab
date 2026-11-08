@@ -30,7 +30,8 @@ def osrel():
     for line in open("/etc/os-release"):
         k, _, v = line.strip().partition("=")
         d[k] = v.strip('"')
-    return {"id": d.get("ID"), "version_id": d.get("VERSION_ID"), "kernel": os.uname().release}
+    # Kernel is published as major.minor only: the patch level helps an attacker more than a reader.
+    return {"id": d.get("ID"), "version_id": d.get("VERSION_ID"), "kernel": ".".join(os.uname().release.split(".")[:2])}
 
 
 def ssh():
@@ -130,6 +131,41 @@ def backup(path):
     return {"path": path, "present": h is not None, "sha256": h}
 
 
+def listening():
+    # Sockets actually accepting TCP connections, loopback excluded. Docker-published
+    # ports bypass ufw, so the firewall rule list alone does not show what is reachable.
+    t = run("ss", "-tlnpH", sudo=True) or run("ss", "-tlnH")  # without sudo, process names are unknown
+    if t is None:
+        return None
+    out = []
+    for line in t.splitlines():
+        f = line.split()
+        if len(f) < 4:
+            continue
+        addr, _, port = f[3].rpartition(":")
+        addr = addr.strip("[]").split("%")[0]
+        if addr.startswith("127.") or addr == "::1" or not port.isdigit():
+            continue
+        proc = re.search(r'users:\(\("([^"]+)"', line)
+        out.append({"address": addr, "port": int(port), "process": proc.group(1) if proc else None})
+    return sorted(out, key=lambda r: (r["port"], r["address"]))
+
+
+def error_sources(limit=5):
+    t = run("journalctl", "--no-pager", "-q", "-b", "-p", "err", "-o", "json")
+    if t is None:
+        return None
+    counts = {}
+    for line in t.splitlines():
+        try:
+            e = json.loads(line)
+        except ValueError:
+            continue
+        k = e.get("SYSLOG_IDENTIFIER") or e.get("_COMM") or "unknown"
+        counts[k] = counts.get(k, 0) + 1
+    return [{"source": k, "lines": n} for k, n in sorted(counts.items(), key=lambda x: -x[1])[:limit]]
+
+
 svc = [{"name": n, "state": (run("systemctl", "is-active", n) or "inactive").strip()}
        for n in ("ssh", "cockpit.socket", "libvirtd")]
 errs = run("journalctl", "--no-pager", "-q", "-b", "-p", "err", "-o", "cat")
@@ -138,7 +174,9 @@ snap = {
     "network": {"primary_interface": primary(), "labnet": labnet()},
     "firewall": firewall(), "storage": storage(), "cockpit": cockpit(), "services": svc,
     "logs": {"journal_check": "checked" if errs is not None else None,
-             "errors_this_boot": len(errs.splitlines()) if errs is not None else None},
+             "errors_this_boot": len(errs.splitlines()) if errs is not None else None,
+             "top_error_sources": error_sources()},
+    "listening": listening(),
     "updates": updates(), "backup": backup(os.environ["BACKUP"]),
     "snapshot_meta": {"source": "live capture by src/capture_snapshot.sh on the server",
                       "machine": "hostname " + socket.gethostname(),
