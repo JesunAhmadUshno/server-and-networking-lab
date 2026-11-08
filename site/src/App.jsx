@@ -124,8 +124,8 @@ function Hero() {
       </p>
       <div className="recorded" role="note">
         <b>Live capture {live.snapshot_meta.evidence_date}: {liveRun.passed} of {liveRun.total} pass on the running {live.snapshot_meta.hostname}.</b>
-        <span>Captured on the server by capture_snapshot.sh. {liveRun.failed ? 'Drift found since the recorded baseline:' : 'No drift from the recorded baseline.'}</span>
-        <Terminal summary={{ ...liveRun, results: liveRun.results.filter((r) => !r.pass) }} label="Failing checks on the live capture" path={LIVE_PATH} />
+        <span>Captured on the server by capture_snapshot.sh. It found two firewall rules added after the recorded baseline, xrdp remote desktop (3389) and the Penpot design server (9001); the Owner approved both on 2026-11-07 and they are now on the baseline's approved list. A Penpot rule on the Tailscale interface was missed by the first capture script and is checked on the next capture.</span>
+        <Terminal summary={{ ...liveRun, results: liveRun.results.filter((r) => !r.pass || r.check === 'firewall_lan_only') }} label="Firewall check on the live capture" path={LIVE_PATH} />
       </div>
       <div className="actions">
         <a className="btn primary" href="#checker">Run the checker</a>
@@ -469,7 +469,7 @@ function Limits() {
     ['Weak check: backup', `verified_config_backup only checks that a backup is marked present and its hash is 64 hex characters long. It never compares the hash with the file.`],
     ['Weak check: journal', `services_and_logs accepts a self-reported string, journal_check == "${policy.journal}".`],
     ['Unexplained floor', `cockpit_dashboard wants version ≥ ${policy.minCockpit}, with no stated reason for that number.`],
-    ['One host, not a tool', `The interface (${policy.iface}), address (${policy.address}), ports (${policy.ports.join(', ')}) and subnet are fixed in baseline_check.py. It checks this machine, not any server.`],
+    ['One host, not a tool', `The interface (${policy.iface}), address (${policy.address}), approved ports (${policy.approvedPorts.join(', ')}) and subnet are fixed in baseline_check.py. It checks this machine, not any server.`],
     ['The firewall explorer is a model', 'It evaluates the recorded ufw rules in your browser. It never contacts the server and ignores loopback, established connections and IPv6.'],
     ['Capture script is partial', 'capture_snapshot.sh prints only the os and ssh fields. Its output would fail most checks, so capture-to-check has not been shown end to end.'],
   ];

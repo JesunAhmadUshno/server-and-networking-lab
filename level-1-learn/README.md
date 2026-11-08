@@ -40,7 +40,8 @@ baseline_check.py, and each check prints the value it actually saw.
    place. It opens in limited (read-only) access; administrative
    access is an explicit elevation inside the session.
 6. Firewall and updates. ufw is active, default deny incoming, and
-   only ports 22 and 9090 are open, only to 192.168.1.0/24.
+   22 and 9090 are open to 192.168.1.0/24 only; since 2026-11-07 the
+   approved list also allows 3389 (xrdp) and 9001 (Penpot), see below.
    Automatic security updates are on.
 7. Backup proof. A verified config backup sits on the pool at
    /srv/backup/pre-perc-2026-10-26.tar.gz, SHA256
@@ -74,6 +75,16 @@ interface from any source, which this snapshot does not contain: the
 first version of capture_snapshot.sh skipped interface-scoped ufw
 rules. The script now records them (with an "interface" field), and
 the snapshot file is kept as captured, incomplete on that one rule.
+
+Owner decision, 2026-11-07: keep both. The firewall check changed
+from "exactly ports 22 and 9090" to an approved list, recorded in
+baseline_check.py: 22 and 9090 must be open to 192.168.1.0/24; 3389
+(xrdp) and 9001 (Penpot) may be; 9001 may also be open on tailscale0;
+any other rule, source or interface fails. Both snapshots now score
+10 of 10. Four tests pin the new rule (approved ports pass, an
+unapproved LAN port fails, a tailnet rule on an unapproved port fails,
+a missing SSH rule fails). The next capture, with the fixed script,
+must include the tailscale0 rule and still score 10 of 10.
 
 Also from the live capture: the backup file's SHA-256 equals the hash
 recorded on 2026-10-26 (the backup is unchanged), and the journal

@@ -31,7 +31,10 @@ const strings = (s) => [...s.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
 export function parsePolicy(src) {
   const os = need(src, /os_id == "([^"]+)" and version\.startswith\("([^"]+)"\)/, 'the OS rule');
   const ip = need(src, /iface\.get\("name"\) == "([^"]+)" and iface\.get\("address"\) == "([^"]+)" and iface\.get\("mode"\) == "([^"]+)"/, 'the static IP rule');
-  const fw = need(src, /ports == \[([\d, ]+)\] and sources == \[([^\]]+)\]/, 'the firewall rule');
+  const req = need(src, /^REQUIRED_PORTS = \[([\d, ]+)\]/m, 'the required firewall ports');
+  const lanSrc = need(src, /^LAN_SOURCE = "([^"]+)"/m, 'the LAN source');
+  const appr = need(src, /^APPROVED_LAN_PORTS = \[([\d, ]+)\]/m, 'the approved LAN ports');
+  const tn = need(src, /^APPROVED_TAILNET = \{"([^"]+)": \[([\d, ]+)\]\}/m, 'the approved tailnet rule');
   const st = need(src, /pool\.get\("name"\) == "([^"]+)" and len\(pvs\) == (\d+) and total >= ([\d.]+)/, 'the storage rule');
   const cpPort = need(src, /cp\.get\("port"\) == (\d+)/, 'the Cockpit port');
   const cpVer = need(src, /int\(cp\.get\("version", 0\)\) >= (\d+)/, 'the Cockpit version floor');
@@ -41,7 +44,8 @@ export function parsePolicy(src) {
   return {
     osId: os[1], osPrefix: os[2],
     iface: ip[1], address: ip[2], mode: ip[3],
-    ports: fw[1].split(',').map(Number), sources: strings(fw[2]),
+    ports: req[1].split(',').map(Number), sources: [lanSrc[1]],
+    approvedPorts: appr[1].split(',').map(Number), tailnet: { [tn[1]]: tn[2].split(',').map(Number) },
     pool: st[1], pvCount: +st[2], minTotalGb: +st[3],
     cockpitPort: +cpPort[1], minCockpit: +cpVer[1],
     labnet: net[1], labnetSubnet: net[2],
@@ -69,11 +73,14 @@ const CHECKS = {
   firewall_lan_only(s, p) {
     const fw = obj(get(s, ['firewall'], {}));
     const rules = list(fw.allowed_from_lan).filter(isObj);
-    const ports = rules.map((r) => r.port).sort((a, b) => a - b);
-    const sources = [...new Set(rules.map((r) => r.source))].sort();
+    const lan = rules.filter((r) => !r.interface), scoped = rules.filter((r) => r.interface);
+    const ports = lan.map((r) => r.port).sort((a, b) => a - b);
+    const sources = [...new Set(lan.map((r) => r.source))].sort();
+    const tailnet = scoped.map((r) => `${pyStr(r.interface)}:${pyStr(r.port)}`).sort();
     const ok = fw.active === true && fw.default_incoming === 'deny'
-      && JSON.stringify(ports) === JSON.stringify(p.ports) && JSON.stringify(sources) === JSON.stringify(p.sources);
-    return [ok, `active=${pyStr(fw.active)} default_incoming=${pyStr(fw.default_incoming)} ports=${pyStr(ports)} sources=${pyStr(sources)}`];
+      && JSON.stringify(sources) === JSON.stringify(p.sources) && ports.every((x) => p.approvedPorts.includes(x))
+      && p.ports.every((x) => ports.includes(x)) && scoped.every((r) => (p.tailnet[r.interface] || []).includes(r.port));
+    return [ok, `active=${pyStr(fw.active)} default_incoming=${pyStr(fw.default_incoming)} ports=${pyStr(ports)} sources=${pyStr(sources)} tailnet=${pyStr(tailnet)}`];
   },
   storage_pool_labvg(s, p) {
     const pool = obj(get(s, ['storage', 'pool'], {})), pvs = list(pool.physical_volumes), total = poolTotal(pvs);

@@ -90,6 +90,29 @@ class BaselineTests(unittest.TestCase):
         snap["updates"]["automatic_security_updates"] = False
         self.assertEqual(failed_names(run_checks(snap)), ["automatic_security_updates"])
 
+    def test_owner_approved_ports_pass(self):
+        # 3389 (xrdp) and 9001 (Penpot) on the LAN, 9001 on the tailnet: approved 2026-11-07.
+        snap = copy.deepcopy(load())
+        snap["firewall"]["allowed_from_lan"] += [{"port": 3389, "source": "192.168.1.0/24"},
+                                                 {"port": 9001, "source": "192.168.1.0/24"},
+                                                 {"port": 9001, "source": "Anywhere", "interface": "tailscale0"}]
+        self.assertEqual(failed_names(run_checks(snap)), [])
+
+    def test_unapproved_lan_port_fails_firewall_only(self):
+        snap = copy.deepcopy(load())
+        snap["firewall"]["allowed_from_lan"].append({"port": 8080, "source": "192.168.1.0/24"})
+        self.assertEqual(failed_names(run_checks(snap)), ["firewall_lan_only"])
+
+    def test_tailnet_rule_on_unapproved_port_fails_firewall_only(self):
+        snap = copy.deepcopy(load())
+        snap["firewall"]["allowed_from_lan"].append({"port": 22, "source": "Anywhere", "interface": "tailscale0"})
+        self.assertEqual(failed_names(run_checks(snap)), ["firewall_lan_only"])
+
+    def test_missing_ssh_rule_fails_firewall_only(self):
+        snap = copy.deepcopy(load())
+        snap["firewall"]["allowed_from_lan"] = [r for r in snap["firewall"]["allowed_from_lan"] if r["port"] != 22]
+        self.assertEqual(failed_names(run_checks(snap)), ["firewall_lan_only"])
+
     def test_snapshot_meta_names_its_source_and_date(self):
         meta = load()["snapshot_meta"]
         self.assertEqual(meta["evidence_date"], "2026-10-26")

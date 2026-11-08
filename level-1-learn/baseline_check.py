@@ -41,15 +41,29 @@ def check_static_ip(snap):
     return ok, "interface=%s address=%s mode=%s" % (iface.get("name"), iface.get("address"), iface.get("mode"))
 
 
+# Firewall policy. SSH (22) and Cockpit (9090) must be open to the LAN. xrdp remote desktop
+# (3389) and the Penpot design server (9001) were found by the 2026-11-07 live capture and
+# approved by the Owner the same day; Penpot is also allowed on the tailscale0 interface,
+# where only devices signed into the tailnet can reach it. Any other rule fails the check.
+REQUIRED_PORTS = [22, 9090]
+LAN_SOURCE = "192.168.1.0/24"
+APPROVED_LAN_PORTS = [22, 3389, 9001, 9090]
+APPROVED_TAILNET = {"tailscale0": [9001]}
+
+
 def check_firewall(snap):
     fw = _get(snap, "firewall", default={}) or {}
-    rules = fw.get("allowed_from_lan", []) or []
-    ports = sorted(r.get("port") for r in rules if isinstance(r, dict))
-    sources = sorted(set(r.get("source") for r in rules if isinstance(r, dict)))
+    rules = [r for r in fw.get("allowed_from_lan", []) or [] if isinstance(r, dict)]
+    lan = [r for r in rules if not r.get("interface")]
+    ports = sorted(r.get("port") for r in lan)
+    sources = sorted(set(r.get("source") for r in lan))
+    tailnet = sorted("%s:%s" % (r.get("interface"), r.get("port")) for r in rules if r.get("interface"))
     ok = (fw.get("active") is True and fw.get("default_incoming") == "deny"
-          and ports == [22, 9090] and sources == ["192.168.1.0/24"])
-    return ok, "active=%s default_incoming=%s ports=%s sources=%s" % (
-        fw.get("active"), fw.get("default_incoming"), ports, sources)
+          and sources == [LAN_SOURCE] and all(p in APPROVED_LAN_PORTS for p in ports)
+          and all(p in ports for p in REQUIRED_PORTS)
+          and all(r.get("port") in APPROVED_TAILNET.get(r.get("interface"), []) for r in rules if r.get("interface")))
+    return ok, "active=%s default_incoming=%s ports=%s sources=%s tailnet=%s" % (
+        fw.get("active"), fw.get("default_incoming"), ports, sources, tailnet)
 
 
 def check_storage_pool(snap):

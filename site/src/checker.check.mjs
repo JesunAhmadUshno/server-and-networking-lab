@@ -25,6 +25,11 @@ const cases = [['recorded snapshot', snap], ...MUTATIONS.map((m) => [m.test, mut
   edge('three PVs exactly at the pool threshold', (s) => { s.storage.pool.physical_volumes[2].size_gb -= Math.round((poolTotal(pvs) - policy.minTotalGb) * 100) / 100; }),
   edge('Cockpit one version below the floor', (s) => { s.cockpit.version = policy.minCockpit - 1; }),
   edge('firewall inactive', (s) => { s.firewall.active = false; }),
+  edge('owner-approved extra ports', (s) => { s.firewall.allowed_from_lan.push({ port: 3389, source: '192.168.1.0/24' }, { port: 9001, source: '192.168.1.0/24' }, { port: 9001, source: 'Anywhere', interface: 'tailscale0' }); }),
+  edge('unapproved LAN port', (s) => { s.firewall.allowed_from_lan.push({ port: 8080, source: '192.168.1.0/24' }); }),
+  edge('tailnet rule on an unapproved port', (s) => { s.firewall.allowed_from_lan.push({ port: 22, source: 'Anywhere', interface: 'tailscale0' }); }),
+  edge('SSH rule missing', (s) => { s.firewall.allowed_from_lan = s.firewall.allowed_from_lan.filter((r) => r.port !== 22); }),
+  ['live capture 2026-11-07', JSON.parse(read('level-1-learn/evidence/r610-snapshot-2026-11-07-live.json'))],
   ['empty snapshot', {}]];
 const py = JSON.parse(execFileSync('python3', ['-I', '-c',
   'import json,sys; sys.path.insert(0, sys.argv[1]); from baseline_check import run_checks; '
