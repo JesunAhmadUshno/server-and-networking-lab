@@ -27,7 +27,7 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
       # The build's parity check runs the Python checker next to the JS port.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: npm ci
