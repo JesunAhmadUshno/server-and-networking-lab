@@ -84,7 +84,7 @@ function Dock() {
 export default function App() {
   useReveal();
   return (
-    <div className="wrap">
+    <div className="wrap"><a className="skip" href="#top">Skip to content</a>
       <MenuBar />
       <div className="glow" aria-hidden="true" />
       <Hero />
@@ -98,7 +98,7 @@ export default function App() {
       <Dock />
       <footer>
         Code: Apache-2.0. Every number on this page is read from <code>src/</code>, <code>experiments/</code>, <code>tests/</code> and the docs at build time; the checker, the mutation lab, the storage calculator and the firewall model run in your browser.
-      </footer>
+      <nav className="support" aria-label="Support this work"><a href="https://github.com/sponsors/JesunAhmadUshno">Sponsor this work</a><a href="https://github.com/sponsors/JesunAhmadUshno">Donate</a><a href="https://buymeacoffee.com/jesun">Buy Me a Coffee</a><a href="https://calendly.com/jesunahmadushno/30min">Work with me</a></nav></footer>
     </div>
   );
 }
